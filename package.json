@@ -1,0 +1,18 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "The Chat Service for Buyers First",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-ts": "tsc && node ./dist/index.js",
+    "start-dev": "nodemon index.js",
+    "start-prod": "node ./dist/index.js"
+  },
+  "author": "Yoseph Tenaw",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "typescript": "^5.3.3"
+  }
+}
