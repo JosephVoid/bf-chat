@@ -2,8 +2,9 @@ import express from 'express';
 import { createServer } from 'node:http';
 import dotenv from "dotenv"; dotenv.config();
 import { Server } from 'socket.io';
-import { allChatMessageController, allMessageController, newMessageCountController } from './controllers';
+import { allChatMessageController, allMessageController, newMessageCountController, seenChatController } from './controllers';
 import { getRoomId } from './helpers';
+import bodyParser from 'body-parser';
 
 const app = express();
 const server = createServer(app);
@@ -13,6 +14,8 @@ const sockio = new Server(server, {
         credentials: true
     }
 });
+
+app.use(bodyParser.json());
 
 let activeUsers: {roomId: string, userId: number}[] = [];
 
@@ -54,6 +57,8 @@ app.get('/new-msg-count/:userId', newMessageCountController);
 app.get('/all-msg/:userId', allMessageController);
 
 app.get('/all-chat-msg/:userId/:otherUserId', allChatMessageController);
+
+app.post('/seen-chat', seenChatController);
 
 const port = process.env.PORT;
 server.listen(port, () => {
