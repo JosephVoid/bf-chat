@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'node:http';
 import dotenv from "dotenv"; dotenv.config();
 import { Server } from 'socket.io';
-import { allChatMessageController, lastMessageController, allChattedUsers, newMessageCountController, seenChatController } from './controllers';
+import { allChatMessageController, lastMessageController, newMessageCountController, seenChatController } from './controllers';
 import { getRoomId, getUserId, saveChat } from './helpers';
 import bodyParser from 'body-parser';
 
@@ -80,8 +80,6 @@ app.get('/new-msg-count/:userId', newMessageCountController);
 app.get('/last-msgs/:userId', lastMessageController);
 
 app.get('/all-chat-msg/:userId/:otherUserId', allChatMessageController);
-
-app.get('/all-chatted-users/:userId', allChattedUsers);
 
 app.post('/seen-chat', seenChatController);
 

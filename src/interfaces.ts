@@ -7,5 +7,13 @@ export interface Messages extends RowDataPacket {
     to_user: number,
     sent_date: Date,
     seen: number,
-    db_room: string
+    db_room: string,
+    first_name?: string,
+    last_name?: string
+}
+
+export interface Users extends RowDataPacket{
+    USER_ID: number,
+    first_name: string,
+    last_name: string
 }
