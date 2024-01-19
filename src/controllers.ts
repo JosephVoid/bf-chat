@@ -64,10 +64,18 @@ export async function lastMessageController (req:any, res:any) {
         }
         /* Get the users the currrent user has chatted witth */
         const [usr_result] = await conn.query<Users[]>(`
-            SELECT DISTINCT users.id AS USER_ID, users.first_name, users.last_name
-            FROM messages LEFT JOIN users ON messages.from_user = users.id
+            SELECT DISTINCT users.id AS USER_ID,users.first_name, users.last_name
+            FROM messages
+            LEFT JOIN users ON messages.to_user = users.id
+            WHERE (messages.from_user = ? OR messages.to_user = ?) AND users.id != ?
+            
+            UNION
+            
+            SELECT DISTINCT users.id AS USER_ID,users.first_name, users.last_name
+            FROM messages
+            LEFT JOIN users ON messages.from_user = users.id
             WHERE (messages.from_user = ? OR messages.to_user = ?) AND users.id != ?`,
-        [userId, userId, userId]);
+        [userId, userId, userId, userId, userId, userId]);
 
         const MsgRes = filterResults();
         /* Add first and last names to the message */
