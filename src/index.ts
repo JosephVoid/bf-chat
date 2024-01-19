@@ -2,8 +2,8 @@ import express from 'express';
 import { createServer } from 'node:http';
 import dotenv from "dotenv"; dotenv.config();
 import { Server } from 'socket.io';
-import { allChatMessageController, allMessageController, newMessageCountController, seenChatController } from './controllers';
-import { getRoomId } from './helpers';
+import { allChatMessageController, lastMessageController, allChattedUsers, newMessageCountController, seenChatController } from './controllers';
+import { getRoomId, getUserId, saveChat } from './helpers';
 import bodyParser from 'body-parser';
 
 const app = express();
@@ -36,11 +36,34 @@ sockio.on('connection', (socket) => {
     /* Listen to private chats and send to appopriate room*/
     socket.on('private-chat', ({text, to}) => {
         console.log("User Id: ",socket.handshake.auth.id, " sent: "+text, " to user "+to);
-        // TODO: store to DB
-        socket.to(getRoomId(to, activeUsers)).emit('private-chat-response', {
-            text, 
-            from: socket.id
-        })
+        if (getRoomId(to, activeUsers) === '') {
+            /* If user is inactive, store to DB as not seen */
+            saveChat({
+                text: text,
+                from_user: getUserId(socket.id, activeUsers),
+                to_user: to,
+                sent_date: new Date(),
+                seen: 0,
+                db_room: getUserId(socket.id, activeUsers)+"-"+to
+            })
+        } else {
+            /* If user is active */
+            socket.to(getRoomId(to, activeUsers)).emit('private-chat-response', {
+                text, 
+                from_user: getUserId(socket.id, activeUsers),
+                sent_date: new Date(),
+                seen: 1
+            })
+            saveChat({
+                text: text,
+                from_user: getUserId(socket.id, activeUsers),
+                to_user: to,
+                sent_date: new Date(),
+                seen: 1,
+                db_room: getUserId(socket.id, activeUsers)+"-"+to
+            })
+        }
+
     })
     /* Send the the list of active users, when a new user connects */
     socket.broadcast.emit("user-connected", activeUsers);
@@ -54,9 +77,11 @@ sockio.on('connection', (socket) => {
 
 app.get('/new-msg-count/:userId', newMessageCountController);
 
-app.get('/all-msg/:userId', allMessageController);
+app.get('/last-msgs/:userId', lastMessageController);
 
 app.get('/all-chat-msg/:userId/:otherUserId', allChatMessageController);
+
+app.get('/all-chatted-users/:userId', allChattedUsers);
 
 app.post('/seen-chat', seenChatController);
 
