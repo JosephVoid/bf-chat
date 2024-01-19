@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import { allChatMessageController, lastMessageController, newMessageCountController, seenChatController } from './controllers';
 import { getRoomId, getUserId, saveChat } from './helpers';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
 const server = createServer(app);
@@ -16,6 +17,7 @@ const sockio = new Server(server, {
 });
 
 app.use(bodyParser.json());
+app.use(cors());
 
 let activeUsers: {roomId: string, userId: number}[] = [];
 
