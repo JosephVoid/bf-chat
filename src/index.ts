@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import dotenv from "dotenv"; dotenv.config();
 import { Server } from 'socket.io';
 import { allChatMessageController, lastMessageController, newMessageCountController, seenChatController } from './controllers';
-import { getRoomId, getUserId, saveChat } from './helpers';
+import { getRoomId, getUserId, saveChat, verifyToken } from './helpers';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
@@ -19,7 +19,22 @@ const sockio = new Server(server, {
 app.use(bodyParser.json());
 app.use(cors());
 
+/* Securing API */
+app.use((req, res, next) => {
+    let header = <string> req.headers.authorization;
+    if(!verifyToken(header)) {
+        return res.status(401).send("Unauthorized");
+    }
+    next();
+})
+
 let activeUsers: {roomId: string, userId: number}[] = [];
+
+/* Securing socket */
+sockio.use((socket, next) => {
+    if (!verifyToken(socket.handshake.auth.jwt))
+        next(new Error("Unauthorized"));
+})
 
 sockio.on('connection', (socket) => {
     /* Get all the active users in the connection, and store in array */
@@ -27,17 +42,17 @@ sockio.on('connection', (socket) => {
         if (activeUsers.filter((usr) => usr.roomId == id).length == 0) {
             activeUsers.push({
                 roomId: id,
-                userId: socket.handshake.auth.id
+                userId: <number> verifyToken(socket.handshake.auth.jwt)
             });
         }
     }
-    console.log("User Id: ", socket.handshake.auth.id, " connected | ", 
+    console.log("User Id: ", verifyToken(socket.handshake.auth.jwt), " connected | ", 
     activeUsers.length, ": Connected users");
     /* Send the active users list to client */
     socket.emit('active-users', activeUsers);
     /* Listen to private chats and send to appopriate room*/
     socket.on('private-chat', ({text, to}) => {
-        console.log("User Id: ",socket.handshake.auth.id, " sent: "+text, " to user "+to);
+        console.log("User Id: ",verifyToken(socket.handshake.auth.jwt), " sent: "+text, " to user "+to);
         if (getRoomId(to, activeUsers) === '') {
             /* If user is inactive, store to DB as not seen */
             saveChat({
