@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise';
 import { Messages } from './interfaces';
+import jwt from 'jsonwebtoken';
 
 export async function connect(): Promise<mysql.Connection>{
     const conn = await mysql.createConnection({
@@ -32,5 +33,14 @@ export async function saveChat (message: Omit<Messages, "id">): Promise<boolean>
         return true
     } catch (error) {
         return false
+    }
+}
+
+export function verifyToken (token: string) {
+    try {
+        var decoded = jwt.verify(token, process.env.JWT_SEC as string);
+        return (<number> (<any>decoded).userId);
+    } catch(err) {
+        return false;
     }
 }
